@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import pymupdf
 import re
 import pandas as pd
 import sys
@@ -6,7 +6,7 @@ import logging
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler("pdf_chord_analyser.log"),
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def open_pdf(pdf_path):
     logger.info(f"Opening PDF file: {pdf_path}")
-    return fitz.open(pdf_path)
+    return pymupdf.open(pdf_path)
 
 def extract_text_from_page(page):
     logger.debug(f"Extracting text from page number: {page.number}")
@@ -27,8 +27,10 @@ def split_text_into_lines(text):
     logger.debug("Splitting text into lines")
     return text.split("\n")
 
-def is_title_line(line):
-    result = len(line.strip()) > 3 and line.isupper()
+def is_title_line(line, chord_pattern):
+    result = find_chords_in_line(line, chord_pattern) == 0
+    result = result and line != "CONTENTS"
+    result = result and line != "CHORUS"
     logger.debug(f"Checking if line is a title: {line} - Result: {result}")
     return result
 
@@ -54,7 +56,7 @@ def analyse_page(page, chord_pattern):
 def analyse_lines(lines, chord_pattern, current_song):
     songs = []
     for line in lines:
-        if is_title_line(line):  # Basic title detection
+        if is_title_line(line, chord_pattern):  # Basic title detection
             if current_song:
                 songs.append(finalize_song(current_song))
             current_song = create_new_song(line)
@@ -71,7 +73,8 @@ def extract_songs_and_chords(pdf_path):
     doc = open_pdf(pdf_path)
     songs = []
     current_song = None
-    chord_pattern = re.compile(r"\b[A-G][#b]?m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?\b")
+    # chord_pattern = re.compile(r"\b[A-G][#b]?m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?\b")
+    chord_pattern = re.compile(r"\b \(*.\)\b")
 
     for page in doc:
         lines = analyse_page(page, chord_pattern)
