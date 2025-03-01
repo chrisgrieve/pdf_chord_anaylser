@@ -25,6 +25,26 @@ def finalize_song(song):
     song["unique_chords"] = len(song["chords"])
     return song
 
+def analyse_page(page, chord_pattern):
+    text = extract_text_from_page(page)
+    lines = split_text_into_lines(text)
+    return lines
+
+def analyse_lines(lines, chord_pattern, current_song):
+    songs = []
+    for line in lines:
+        if is_title_line(line):  # Basic title detection
+            if current_song:
+                songs.append(finalize_song(current_song))
+            current_song = create_new_song(line)
+        else:
+            if current_song:
+                chords = find_chords_in_line(line, chord_pattern)
+                if chords:
+                    current_song["chords"].update(chords)
+                    current_song["chord_changes"] += max(0, len(chords) - 1)  # Count chord changes in a line
+    return songs, current_song
+
 def extract_songs_and_chords(pdf_path):
     doc = open_pdf(pdf_path)
     songs = []
@@ -32,20 +52,9 @@ def extract_songs_and_chords(pdf_path):
     chord_pattern = re.compile(r"\b[A-G][#b]?m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?\b")
 
     for page in doc:
-        text = extract_text_from_page(page)
-        lines = split_text_into_lines(text)
-
-        for line in lines:
-            if is_title_line(line):  # Basic title detection
-                if current_song:
-                    songs.append(finalize_song(current_song))
-                current_song = create_new_song(line)
-            else:
-                if current_song:
-                    chords = find_chords_in_line(line, chord_pattern)
-                    if chords:
-                        current_song["chords"].update(chords)
-                        current_song["chord_changes"] += max(0, len(chords) - 1)  # Count chord changes in a line
+        lines = analyse_page(page, chord_pattern)
+        result_songs, current_song = analyse_lines(lines, chord_pattern, current_song)
+        songs.extend(result_songs)
 
     if current_song:
         songs.append(finalize_song(current_song))
