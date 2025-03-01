@@ -31,11 +31,15 @@ def extract_songs_and_chords(pdf_path):
 
     return songs
 
-songs_data = extract_songs_and_chords("songs.pdf")
+def main():
+    songs_data = extract_songs_and_chords("songs.pdf")
 
-# Convert to DataFrame and save to CSV
-df = pd.DataFrame(songs_data)
-df["chords"] = df["chords"].apply(lambda x: ", ".join(x))  # Convert sets to readable strings
-df.to_csv("chord_analysis.csv", index=False)
+    # Convert to DataFrame and save to CSV
+    df = pd.DataFrame(songs_data)
+    df["chords"] = df["chords"].apply(lambda x: ", ".join(x))  # Convert sets to readable strings
+    df.to_csv("chord_analysis.csv", index=False)
 
-print(df.head())  # Preview the output
+    print(df.head())  # Preview the output
+
+if __name__ == "__main__":
+    main()
