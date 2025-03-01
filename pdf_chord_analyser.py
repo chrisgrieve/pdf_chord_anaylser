@@ -2,27 +2,48 @@ import fitz  # PyMuPDF
 import re
 import pandas as pd
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("pdf_chord_analyser.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 def open_pdf(pdf_path):
+    logger.info(f"Opening PDF file: {pdf_path}")
     return fitz.open(pdf_path)
 
 def extract_text_from_page(page):
+    logger.debug(f"Extracting text from page number: {page.number}")
     return page.get_text("text")
 
 def split_text_into_lines(text):
+    logger.debug("Splitting text into lines")
     return text.split("\n")
 
 def is_title_line(line):
-    return len(line.strip()) > 3 and line.isupper()
+    result = len(line.strip()) > 3 and line.isupper()
+    logger.debug(f"Checking if line is a title: {line} - Result: {result}")
+    return result
 
 def find_chords_in_line(line, chord_pattern):
-    return chord_pattern.findall(line)
+    chords = chord_pattern.findall(line)
+    logger.debug(f"Finding chords in line: {line} - Chords: {chords}")
+    return chords
 
 def create_new_song(title):
+    logger.info(f"Creating new song with title: {title.strip()}")
     return {"title": title.strip(), "chords": set(), "chord_changes": 0}
 
 def finalize_song(song):
     song["unique_chords"] = len(song["chords"])
+    logger.info(f"Finalizing song: {song['title']} - Unique chords: {song['unique_chords']}")
     return song
 
 def analyse_page(page, chord_pattern):
@@ -46,6 +67,7 @@ def analyse_lines(lines, chord_pattern, current_song):
     return songs, current_song
 
 def extract_songs_and_chords(pdf_path):
+    logger.info(f"Extracting songs and chords from PDF: {pdf_path}")
     doc = open_pdf(pdf_path)
     songs = []
     current_song = None
@@ -59,14 +81,17 @@ def extract_songs_and_chords(pdf_path):
     if current_song:
         songs.append(finalize_song(current_song))
 
+    logger.info(f"Extraction complete. Total songs found: {len(songs)}")
     return songs
 
 def convert_songs_to_dataframe(songs_data):
+    logger.info("Converting songs data to DataFrame")
     df = pd.DataFrame(songs_data)
     df["chords"] = df["chords"].apply(lambda x: ", ".join(x))  # Convert sets to readable strings
     return df
 
 def save_dataframe_to_csv(df, csv_path):
+    logger.info(f"Saving DataFrame to CSV file: {csv_path}")
     df.to_csv(csv_path, index=False)
 
 def main():
@@ -75,11 +100,13 @@ def main():
         sys.exit(1)
 
     pdf_path = sys.argv[1]
+    logger.info(f"Started processing PDF: {pdf_path}")
     songs_data = extract_songs_and_chords(pdf_path)
 
     df = convert_songs_to_dataframe(songs_data)
     save_dataframe_to_csv(df, "chord_analysis.csv")
 
+    logger.info("Processing complete. Previewing output:")
     print(df.head())  # Preview the output
 
 if __name__ == "__main__":
