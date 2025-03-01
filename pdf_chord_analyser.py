@@ -1,6 +1,8 @@
 import fitz  # PyMuPDF
 import re
 import pandas as pd
+import sys
+
 
 def extract_songs_and_chords(pdf_path):
     doc = fitz.open(pdf_path)
@@ -31,8 +33,14 @@ def extract_songs_and_chords(pdf_path):
 
     return songs
 
+
 def main():
-    songs_data = extract_songs_and_chords("songs.pdf")
+    if len(sys.argv) != 2:
+        print("Usage: python pdf_chord_analyser.py <pdf_path>")
+        sys.exit(1)
+
+    pdf_path = sys.argv[1]
+    songs_data = extract_songs_and_chords(pdf_path)
 
     # Convert to DataFrame and save to CSV
     df = pd.DataFrame(songs_data)
@@ -40,6 +48,7 @@ def main():
     df.to_csv("chord_analysis.csv", index=False)
 
     print(df.head())  # Preview the output
+
 
 if __name__ == "__main__":
     main()
