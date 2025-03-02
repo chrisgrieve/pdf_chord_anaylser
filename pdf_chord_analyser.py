@@ -74,7 +74,7 @@ def extract_songs_and_chords(pdf_path):
     songs = []
     current_song = None
     # chord_pattern = re.compile(r"\b[A-G][#b]?m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?\b")
-    chord_pattern = re.compile(r"\b \(*.\)\b")
+    chord_pattern = re.compile(r"[\[(](.*?)[\])]")
 
     for page in doc:
         lines = analyse_page(page, chord_pattern)
