@@ -47,12 +47,12 @@ def find_chords_in_line(line, chord_enclosure):
 
 def create_new_song(title):
     logger.info(f"Creating new song with title: {title.strip()}")
-    return {"title": title.strip(), "chords": set(), "chord_changes": 0}
+    return {"title": title.strip(), "chords": set(), "max_chords_in_line": 0}
 
 
 def finalize_song(song):
-    song["unique_chords"] = len(song["chords"])
-    logger.info(f"Finalizing song: {song['title']} - Unique chords: {song['unique_chords']}")
+    song["number_of_chords"] = len(song["chords"])
+    logger.info(f"Finalizing song: {song['title']} - Unique chords: {song['number_of_chords']}")
     return song
 
 
@@ -81,7 +81,7 @@ def analyse_lines(lines, chord_enclosure, current_song, title_line):
             chords = find_chords_in_line(line, chord_enclosure)
             if chords:
                 current_song["chords"].update(chords)
-                current_song["chord_changes"] = max(current_song["chord_changes"], len(chords) - 1)  # Count chord changes in a line
+                current_song["max_chords_in_line"] = max(current_song["max_chords_in_line"], len(chords) - 1)  # Count chord changes in a line
     return songs, current_song
 
 
