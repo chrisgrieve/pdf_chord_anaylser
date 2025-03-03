@@ -30,7 +30,8 @@ def split_text_into_lines(text):
     logger.debug("Splitting text into lines")
     lines = text.split("\n")
     non_empty_lines = [line for line in lines if line.strip()
-                       and "outro" not in line.lower() and "intro" not in line.lower()]
+                       and "outro" not in line.lower()
+                       and "intro" not in line.lower()]
     logger.debug(f"Non-empty lines: {non_empty_lines}")
     return non_empty_lines
 
@@ -45,9 +46,9 @@ def find_chords_in_line(line, chord_enclosure):
     return chords
 
 
-def create_new_song(title):
+def create_new_song(title, page_no):
     logger.info(f"Creating new song with title: {title.strip()}")
-    return {"title": title.strip(), "chords": set(), "max_chords_in_line": 0}
+    return {"title": title.strip(), "page_no": page_no, "chords": set(), "max_chords_in_line": 0}
 
 
 def finalize_song(song):
@@ -59,29 +60,31 @@ def finalize_song(song):
 def analyse_page(page, chord_enclosure):
     text = extract_text_from_page(page)
     lines = split_text_into_lines(text)
+
     if len(lines) > 4:
         # the 3rd line is the title
         title_line = lines[2]
+        page_no = lines[0]
         logger.debug(f"Third line as title: {title_line}")
         # chord notation starts from 4th line
-        return lines[4:], title_line
+        return lines[4:], title_line, page_no
     else:
-        return None, None
+        return None, None, None
 
 
-def analyse_lines(lines, chord_enclosure, current_song, title_line):
+def analyse_lines(lines, chord_enclosure, current_song, title_line, page_no):
     songs = []
     if title_line:
         if current_song:
             songs.append(finalize_song(current_song))
-        current_song = create_new_song(title_line)
+        current_song = create_new_song(title_line, page_no)
 
     for line in lines:
         if current_song:
             chords = find_chords_in_line(line, chord_enclosure)
             if chords:
                 current_song["chords"].update(chords)
-                current_song["max_chords_in_line"] = max(current_song["max_chords_in_line"], len(chords) - 1)  # Count chord changes in a line
+                current_song["max_chords_in_line"] = max(current_song["max_chords_in_line"], len(chords))  # Count chord changes in a line
     return songs, current_song
 
 
@@ -95,9 +98,9 @@ def extract_songs_and_chords(pdf_path):
 
 
     for page in doc:
-        lines, title_line = analyse_page(page, chord_enclosure)
+        lines, title_line, page_no = analyse_page(page, chord_enclosure)
         if lines:
-            result_songs, current_song = analyse_lines(lines, chord_enclosure, current_song, title_line)
+            result_songs, current_song = analyse_lines(lines, chord_enclosure, current_song, title_line, page_no)
             songs.extend(result_songs)
 
     if current_song:
