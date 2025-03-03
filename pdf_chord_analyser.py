@@ -29,7 +29,8 @@ def extract_text_from_page(page):
 def split_text_into_lines(text):
     logger.debug("Splitting text into lines")
     lines = text.split("\n")
-    non_empty_lines = [line for line in lines if line.strip()]
+    non_empty_lines = [line for line in lines if line.strip()
+                       and "outro" not in line.lower() and "intro" not in line.lower()]
     logger.debug(f"Non-empty lines: {non_empty_lines}")
     return non_empty_lines
 
@@ -80,7 +81,7 @@ def analyse_lines(lines, chord_enclosure, current_song, title_line):
             chords = find_chords_in_line(line, chord_enclosure)
             if chords:
                 current_song["chords"].update(chords)
-                current_song["chord_changes"] += max(0, len(chords) - 1)  # Count chord changes in a line
+                current_song["chord_changes"] = max(current_song["chord_changes"], len(chords) - 1)  # Count chord changes in a line
     return songs, current_song
 
 
@@ -90,7 +91,7 @@ def extract_songs_and_chords(pdf_path):
     songs = []
     current_song = None
     # chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
-    chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,6})[\])]")
+    chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,7})[\])]")
 
 
     for page in doc:
