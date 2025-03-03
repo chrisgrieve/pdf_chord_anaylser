@@ -89,8 +89,8 @@ def extract_songs_and_chords(pdf_path):
     doc = open_pdf(pdf_path)
     songs = []
     current_song = None
-    chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
-    # chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,6})[\])]")
+    # chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
+    chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,6})[\])]")
 
 
     for page in doc:
