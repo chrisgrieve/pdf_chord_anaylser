@@ -47,10 +47,10 @@ def find_chords_in_line(line, chord_enclosure):
 
     unbracketed_chords = chord_enclosure.findall(line)
 
-    print(f"unbracketed_chords: {unbracketed_chords}")
+    logger.debug(f"unbracketed_chords: {unbracketed_chords}")
 
     for pattern in unbracketed_chords:
-        print(f"pattern: {pattern}")
+        logger.debug(f"pattern: {pattern}")
         chords = pattern.split("-")
         for chord in chords:
             if is_chord(chord_pattern, chord):
@@ -139,7 +139,7 @@ def save_dataframe_to_csv(df, csv_path):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python pdf_chord_analyser.py <pdf_path>")
+        logger.debug("Usage: python pdf_chord_analyser.py <pdf_path>")
         sys.exit(1)
 
     pdf_path = sys.argv[1]
@@ -150,7 +150,7 @@ def main():
     save_dataframe_to_csv(df, "chord_analysis.csv")
 
     logger.info("Processing complete. Previewing output:")
-    print(df.head())  # Preview the output
+    logger.debug(df.head())  # Preview the output
 
 
 if __name__ == "__main__":
