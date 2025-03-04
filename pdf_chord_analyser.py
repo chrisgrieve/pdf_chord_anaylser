@@ -32,18 +32,33 @@ def split_text_into_lines(text):
     non_empty_lines = [line for line in lines if line.strip()
                        and "outro" not in line.lower()
                        and "intro" not in line.lower()]
-    logger.debug(f"Non-empty lines: {non_empty_lines}")
+    # logger.debug(f"Non-empty lines: {non_empty_lines}")
     return non_empty_lines
+
+def is_chord(chord_pattern, chord):
+    return (chord_pattern.search(chord)
+    and chord_pattern.search(chord).span()[0] == 0
+    and chord_pattern.search(chord).span()[1] == len(chord))
 
 
 def find_chords_in_line(line, chord_enclosure):
-    chords = chord_enclosure.findall(line)
+    result = []
+    chord_pattern = re.compile(r"\b[A-G][7#b+]?(m?(maj7|m7|m9|7|dim|sus2|sus4|add9|aug)?)\b")
 
-    chord_pattern = re.compile(r"\b[A-G][#b+]?(m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?)\b")
-    chords=[chord for chord in chords if chord_pattern.search(chord)]
+    unbracketed_chords = chord_enclosure.findall(line)
 
-    logger.debug(f"Finding chords in line: {line} - Chords: {chords}")
-    return chords
+    logger.debug(f"unbracketed_chords: {unbracketed_chords}")
+
+    for pattern in unbracketed_chords:
+        logger.debug(f"pattern: {pattern}")
+        chords = pattern.split("-")
+        for chord in chords:
+            if is_chord(chord_pattern, chord):
+                if not result or result[-1] != chord:
+                    result.append(chord)
+
+    logger.debug(f"Finding chord in line: {line} - Chords: {result}")
+    return result
 
 
 def create_new_song(title, page_no):
@@ -93,8 +108,8 @@ def extract_songs_and_chords(pdf_path):
     doc = open_pdf(pdf_path)
     songs = []
     current_song = None
-    # chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
-    chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,7})[\])]")
+    chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
+    # chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,7})[\])]")
 
 
     for page in doc:
@@ -124,7 +139,7 @@ def save_dataframe_to_csv(df, csv_path):
 
 def main():
     if len(sys.argv) != 2:
-        print("Usage: python pdf_chord_analyser.py <pdf_path>")
+        logger.debug("Usage: python pdf_chord_analyser.py <pdf_path>")
         sys.exit(1)
 
     pdf_path = sys.argv[1]
@@ -135,7 +150,7 @@ def main():
     save_dataframe_to_csv(df, "chord_analysis.csv")
 
     logger.info("Processing complete. Previewing output:")
-    print(df.head())  # Preview the output
+    logger.debug(df.head())  # Preview the output
 
 
 if __name__ == "__main__":
