@@ -35,25 +35,27 @@ def split_text_into_lines(text):
     # logger.debug(f"Non-empty lines: {non_empty_lines}")
     return non_empty_lines
 
+def is_chord(chord_pattern, chord):
+    return (chord_pattern.search(chord)
+    and chord_pattern.search(chord).span()[0] == 0
+    and chord_pattern.search(chord).span()[1] == len(chord))
+
 
 def find_chords_in_line(line, chord_enclosure):
     result = []
-    unbracketed_chords = chord_enclosure.findall(line)
-
-    logger.debug(f"chords: {unbracketed_chords}")
-
     chord_pattern = re.compile(r"\b[A-G][7#b+]?(m?(maj7|m7|m9|7|dim|sus2|sus4|add9|aug)?)\b")
 
-    chords=[chord for chord in unbracketed_chords
-            if chord_pattern.search(chord)
-            and chord_pattern.search(chord).span()[0] == 0
-            and chord_pattern.search(chord).span()[1]==len(chord)]
+    unbracketed_chords = chord_enclosure.findall(line)
 
-    for chord in chords:
-        split_chords = chord.split("-")
-        for split_chord in split_chords:
-            if(not result or split_chord != result[-1]):
-                result.append(split_chord)
+    print(f"unbracketed_chords: {unbracketed_chords}")
+
+    for pattern in unbracketed_chords:
+        print(f"pattern: {pattern}")
+        chords = pattern.split("-")
+        for chord in chords:
+            if is_chord(chord_pattern, chord):
+                if not result or result[-1] != chord:
+                    result.append(chord)
 
     logger.debug(f"Finding chord in line: {line} - Chords: {result}")
     return result
