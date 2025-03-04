@@ -32,18 +32,31 @@ def split_text_into_lines(text):
     non_empty_lines = [line for line in lines if line.strip()
                        and "outro" not in line.lower()
                        and "intro" not in line.lower()]
-    logger.debug(f"Non-empty lines: {non_empty_lines}")
+    # logger.debug(f"Non-empty lines: {non_empty_lines}")
     return non_empty_lines
 
 
 def find_chords_in_line(line, chord_enclosure):
-    chords = chord_enclosure.findall(line)
+    result = []
+    unbracketed_chords = chord_enclosure.findall(line)
 
-    chord_pattern = re.compile(r"\b[A-G][#b+]?(m?(maj7|m7|7|dim|sus2|sus4|add9|aug)?)\b")
-    chords=[chord for chord in chords if chord_pattern.search(chord)]
+    logger.debug(f"chords: {unbracketed_chords}")
 
-    logger.debug(f"Finding chords in line: {line} - Chords: {chords}")
-    return chords
+    chord_pattern = re.compile(r"\b[A-G][7#b+]?(m?(maj7|m7|m9|7|dim|sus2|sus4|add9|aug)?)\b")
+
+    chords=[chord for chord in unbracketed_chords
+            if chord_pattern.search(chord)
+            and chord_pattern.search(chord).span()[0] == 0
+            and chord_pattern.search(chord).span()[1]==len(chord)]
+
+    for chord in chords:
+        split_chords = chord.split("-")
+        for split_chord in split_chords:
+            if(not result or split_chord != result[-1]):
+                result.append(split_chord)
+
+    logger.debug(f"Finding chord in line: {line} - Chords: {result}")
+    return result
 
 
 def create_new_song(title, page_no):
@@ -93,8 +106,8 @@ def extract_songs_and_chords(pdf_path):
     doc = open_pdf(pdf_path)
     songs = []
     current_song = None
-    # chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
-    chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,7})[\])]")
+    chord_enclosure = re.compile(r"[\[(](.*?)[\])]")
+    # chord_enclosure = re.compile(r"[\[(]([^\[\]()]{1,7})[\])]")
 
 
     for page in doc:
